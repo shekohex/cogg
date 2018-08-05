@@ -1,0 +1,6 @@
+[server]
+ip = "localhost"
+port = "6142"
+
+[files]
+paths = ['./tmp/f1.txt', './tmp/f2.txt']
