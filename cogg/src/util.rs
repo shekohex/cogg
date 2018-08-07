@@ -8,7 +8,6 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 use std::sync::Arc;
-
 pub type ArcHashMap<K, V> = Arc<HashMap<K, V>>;
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -46,6 +45,7 @@ pub(crate) fn setup_config(path: &Path) -> Result<Config> {
     Ok(config)
 }
 
+#[allow(dead_code)]
 pub fn calculate_hashes(paths: Vec<String>) -> Result<ArcHashMap<String, String>> {
     let mut hashes = Arc::new(HashMap::new());
     for path in paths {
