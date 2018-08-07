@@ -1,0 +1,83 @@
+use crate::util::Result;
+use failure::err_msg;
+use futures::future::Future;
+use futures::stream::Stream;
+use log::{error, info, log};
+use protobuf::RepeatedField;
+use protos::main::{File, FileCollection, FileStatus, Void};
+use protos::main_grpc::FilesGuardClient;
+
+pub fn get_files_paths(client: &FilesGuardClient) -> Result<Vec<String>> {
+    let req = Void::new();
+    let mut reply = client.get_files_paths(&req)?;
+    let mut paths = Vec::new();
+    let ok = loop {
+        let f = reply.into_future();
+        match f.wait() {
+            Ok((Some(file), s)) => {
+                reply = s;
+                let path = file.get_path();
+                info!("Found Path at {}", path);
+                paths.push(path.to_owned());
+            }
+            Ok((None, _)) => {
+                info!("List Paths rpc succeeded.");
+                break true;
+            }
+            Err((e, _)) => {
+                error!("List Paths failed: {:?}", e);
+                break false;
+            }
+        }
+    };
+    if ok {
+        Ok(paths)
+    } else {
+        Err(err_msg("Error While Listing Paths"))
+    }
+}
+
+pub fn make_verify_files(client: &FilesGuardClient, paths: Vec<String>) -> Result<bool> {
+    let mut req = FileCollection::new();
+    let files: Vec<File> = paths
+        .iter()
+        .map(move |path| {
+            let mut file = File::new();
+            file.set_path(path.to_owned());
+            let hash = fshash::get_hash_from(path.to_owned()).unwrap_or_else(|_| String::new());
+            file.set_hash(hash);
+            file
+        }).collect();
+
+    let files = RepeatedField::from_vec(files);
+    req.set_files(files);
+    let mut reply = client.verify_files(&req)?;
+    let result = loop {
+        let f = reply.into_future();
+        match f.wait() {
+            Ok((Some(files_status), s)) => {
+                reply = s;
+                if !verify_status(files_status.get_status()) {
+                    error!("Hash MisMatch or maybe file not found");
+                    break false;
+                }
+            }
+            Ok((None, _)) => {
+                info!("Verifying Files rpc succeeded.");
+                break true;
+            }
+            Err((e, _)) => {
+                error!("Verifying Files failed: {:?}", e);
+                break false;
+            }
+        }
+    };
+    Ok(result)
+}
+
+pub fn verify_status(status: FileStatus) -> bool {
+    match status {
+        FileStatus::OK => true,
+        _ => false,
+    }
+}
