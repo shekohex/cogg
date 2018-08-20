@@ -2,4 +2,5 @@
 members = [
     "fshash",
     "cogg",
+    "cogg-hook"
 ]
