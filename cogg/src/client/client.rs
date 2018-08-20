@@ -51,8 +51,7 @@ fn main() -> Result<()> {
                 let buf = vec![0u8; 64];
                 let reader = io::read_exact(socket, buf)
                     .map(|(_, vec)| {
-                        let packet = std::str::from_utf8(&vec)
-                        .unwrap_or_else(|_| ".");
+                        let packet = std::str::from_utf8(&vec).unwrap_or_else(|_| ".");
                         let v: Vec<&str> = packet.split('.').collect();
                         let username = v.first().unwrap_or_else(|| &"");
                         debug!("Username: {:?}", username);
@@ -62,7 +61,7 @@ fn main() -> Result<()> {
             }).map_err(|err| {
                 error!("server error {:?}", err);
             });
-            
+
         info!("Tokio is running on {}", tokio_addr);
         // Start the runtime and spin up the server
         tokio::run(server);
