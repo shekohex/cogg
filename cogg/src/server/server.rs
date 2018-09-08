@@ -1,4 +1,3 @@
-#![feature(rust_2018_preview, use_extern_macros)]
 #![warn(rust_2018_idioms)]
 
 pub(crate) mod files_guard;
@@ -27,8 +26,8 @@ fn main() -> Result<()> {
     let hashes = util::calculate_hashes(config.files.paths)?;
     let env = Arc::new(Environment::new(2));
 
-    let private_key = include_str!("../../private/server.key");
-    let cert = include_str!("../../private/server.crt");
+    let private_key = include_str!("../../private/localhost.key");
+    let cert = include_str!("../../private/localhost.crt");
 
     let credentials = ServerCredentialsBuilder::new()
         .add_cert(cert.into(), private_key.into())
