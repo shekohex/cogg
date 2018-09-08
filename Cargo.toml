@@ -1,6 +1,2 @@
 [workspace]
-members = [
-    "fshash",
-    "cogg",
-    "cogg-hook"
-]
+members = ["fshash", "cogg"]
