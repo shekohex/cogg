@@ -41,6 +41,6 @@ mod tests {
     fn it_should_generate_hash() {
         // the file only contains "1234"
         let hash = crate::get_hash_from("../tmp/f1.txt").unwrap();
-        assert_eq!(hash.as_ref(), "81dc9bdb52d04dc20036dbd8313ed055");
+        assert_eq!(hash, "81dc9bdb52d04dc20036dbd8313ed055");
     }
 }
