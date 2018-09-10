@@ -1,20 +1,6 @@
 syntax = "proto3";
 package cogg;
 
-/**
- * The FilesGuard Service
- * this service is responsible for checking
- * the game client files and verifying if every file is ok.
- *
- * @stable
- * @added-in v1
- */
-service FilesGuard {
-  // Request the list of the files
-  rpc GetFilesPaths(Void) returns (stream FilesPaths);
-  rpc VerifyFiles(FileCollection) returns (stream FilesStatus);
-}
-
 enum FileStatus {
   OK = 0;
   NOT_FOUND = 1;
@@ -37,5 +23,51 @@ message FilesPaths { string path = 1; }
 
 message FileCollection { repeated File files = 1; }
 
+message User {
+  string username = 1;
+}
+
+message UserReq {
+  User user = 1;
+}
+
+message UserRes {
+  string user_hash = 1;
+  int32 status = 2;
+}
+
+message UserPing {
+  string my_hash = 1;
+  int32 timestamp = 2;
+}
+
 // A helper message to be used where there is no input
 message Void {}
+
+/**
+ * The FilesGuard Service
+ * this service is responsible for checking
+ * the game client files and verifying if every file is ok.
+ *
+ * @stable
+ * @added-in v1
+ */
+service FilesGuard {
+  // Request the list of the files
+  rpc GetFilesPaths(Void) returns (stream FilesPaths);
+  rpc VerifyFiles(FileCollection) returns (stream FilesStatus);
+}
+
+/**
+ * The Users Service
+ * this service is responsible for adding/removing
+ * the playes/users from the server, and also checking for them.
+ *
+ * @stable
+ * @added-in v1
+ */
+ service Users {
+   rpc AddUser(UserReq) returns (UserRes);
+   rpc RemoveUser(UserReq) returns (UserRes);
+   rpc Ping(UserPing) returns (UserRes);
+ }
