@@ -1,6 +1,7 @@
 #![warn(rust_2018_idioms)]
 
 pub(crate) mod files_guard;
+pub(crate) mod state;
 #[path = "../util.rs"]
 pub(crate) mod util;
 use colored::*;
@@ -8,8 +9,7 @@ use crate::files_guard::FilesGuardService;
 use crate::util::Result;
 use futures::{sync::oneshot, Future};
 use grpcio::{Environment, ServerBuilder, ServerCredentialsBuilder};
-use log::{info};
-use protos::main_grpc;
+use log::info;
 use std::io::{Read, Write};
 use std::path::Path;
 use std::sync::Arc;
@@ -34,7 +34,7 @@ fn main() -> Result<()> {
         .build();
 
     let files_guard = FilesGuardService::new(hashes);
-    let files_guard_service = main_grpc::create_files_guard(files_guard);
+    let files_guard_service = protos::files_grpc::create_files_guard(files_guard);
 
     let mut server = ServerBuilder::new(env)
         .register_service(files_guard_service)

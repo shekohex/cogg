@@ -2,8 +2,8 @@ use crate::util::ArcHashMap;
 use futures::{sink::Sink, stream, Future};
 use grpcio::{RpcContext, ServerStreamingSink, WriteFlags};
 use log::{debug, error};
-use protos::main::{File, FileCollection, FileStatus, FilesPaths, FilesStatus, Void};
-use protos::main_grpc::FilesGuard;
+use protos::files::{File, FileCollection, FileStatus, FilesPaths, FilesStatus, Void};
+use protos::files_grpc::FilesGuard;
 
 #[derive(Clone)]
 pub struct FilesGuardService {

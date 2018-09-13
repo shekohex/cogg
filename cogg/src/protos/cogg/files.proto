@@ -1,0 +1,39 @@
+syntax = "proto3";
+package cogg;
+
+enum FileStatus {
+  OK = 0;
+  NOT_FOUND = 1;
+  HASH_MISMATCH = 2;
+}
+
+message FilesStatus {
+  File file = 1;
+  FileStatus status = 2;
+}
+
+message File {
+  // used as a key on the server
+  string path = 1;
+  // used as value
+  string hash = 2;
+}
+
+message FilesPaths { string path = 1; }
+
+message FileCollection { repeated File files = 1; }
+// A helper message to be used where there is no input
+message Void {}
+/**
+ * The FilesGuard Service
+ * this service is responsible for checking
+ * the game client files and verifying if every file is ok.
+ *
+ * @stable
+ * @added-in v1
+ */
+service FilesGuard {
+  // Request the list of the files
+  rpc GetFilesPaths(Void) returns (stream FilesPaths);
+  rpc VerifyFiles(FileCollection) returns (stream FilesStatus);
+}

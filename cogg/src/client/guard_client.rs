@@ -52,7 +52,7 @@ pub fn make_verify_files(client: &FilesGuardClient, paths: Vec<String>) -> Resul
     let files = RepeatedField::from_vec(files);
     req.set_files(files);
     let mut reply = client.verify_files(&req)?;
-    
+
     let result = loop {
         let f = reply.into_future();
         match f.wait() {

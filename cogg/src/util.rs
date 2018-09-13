@@ -1,6 +1,6 @@
 use colored::*;
 use failure::Error;
-use log::{info};
+use log::info;
 use serde_derive::Deserialize;
 use std::collections::HashMap;
 use std::fmt;
