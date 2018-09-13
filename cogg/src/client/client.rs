@@ -7,7 +7,7 @@ use colored::*;
 use crate::util::Result;
 use failure::err_msg;
 use grpcio::{ChannelBuilder, ChannelCredentialsBuilder, EnvBuilder};
-use log::{error, info, log};
+use log::{error, info};
 use protos::main_grpc::FilesGuardClient;
 use std::io::Write;
 use std::path::Path;

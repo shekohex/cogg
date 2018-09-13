@@ -2,7 +2,7 @@ use crate::util::Result;
 use failure::err_msg;
 use futures::future::Future;
 use futures::stream::Stream;
-use log::{error, info, log};
+use log::{error, info};
 use protobuf::RepeatedField;
 use protos::main::{File, FileCollection, FileStatus, Void};
 use protos::main_grpc::FilesGuardClient;
@@ -44,7 +44,7 @@ pub fn make_verify_files(client: &FilesGuardClient, paths: Vec<String>) -> Resul
         .map(move |path| {
             let mut file = File::new();
             file.set_path(path.to_owned());
-            let hash = fshash::get_hash_from(path.to_owned()).unwrap_or_else(|_| String::new());
+            let hash = fshash::get_hash_from(&path).unwrap_or_else(|_| String::new());
             file.set_hash(hash);
             file
         }).collect();

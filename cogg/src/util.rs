@@ -1,6 +1,6 @@
 use colored::*;
 use failure::Error;
-use log::{info, log};
+use log::{info};
 use serde_derive::Deserialize;
 use std::collections::HashMap;
 use std::fmt;
@@ -8,6 +8,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 use std::sync::Arc;
+
 pub type ArcHashMap<K, V> = Arc<HashMap<K, V>>;
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -50,7 +51,7 @@ pub fn calculate_hashes(paths: Vec<String>) -> Result<ArcHashMap<String, String>
     let mut hashes = Arc::new(HashMap::new());
     for path in paths {
         let hashes = Arc::make_mut(&mut hashes);
-        let hash = fshash::get_hash_from(path.clone())?;
+        let hash = fshash::get_hash_from(&path)?;
         hashes.insert(path, hash);
     }
     Ok(hashes)

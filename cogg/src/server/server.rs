@@ -8,7 +8,7 @@ use crate::files_guard::FilesGuardService;
 use crate::util::Result;
 use futures::{sync::oneshot, Future};
 use grpcio::{Environment, ServerBuilder, ServerCredentialsBuilder};
-use log::{info, log};
+use log::{info};
 use protos::main_grpc;
 use std::io::{Read, Write};
 use std::path::Path;
