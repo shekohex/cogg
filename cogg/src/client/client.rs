@@ -1,18 +1,24 @@
 #![warn(rust_2018_idioms)]
 
-pub(crate) mod guard_client;
+pub(crate) mod files;
+pub(crate) mod users;
 #[path = "../util.rs"]
 pub(crate) mod util;
 use colored::*;
+use crate::users::Users;
+use crate::files::Files;
 use crate::util::Result;
 use failure::err_msg;
 use grpcio::{ChannelBuilder, ChannelCredentialsBuilder, EnvBuilder};
 use log::{error, info};
-use protos::main_grpc::FilesGuardClient;
+use protos::files_grpc::FilesGuardClient;
+use protos::users::User;
+use protos::users_grpc::UsersClient;
 use std::io::Write;
 use std::path::Path;
 use std::sync::Arc;
-
+use std::thread;
+use std::time::Duration;
 fn main() -> Result<()> {
     std::env::set_var("GG_LOGS", "ggclient,fshash");
     let mut builder = env_logger::Builder::from_env("GG_LOGS");
@@ -28,13 +34,29 @@ fn main() -> Result<()> {
     // Bind the server's socket
     let env = Arc::new(EnvBuilder::new().build());
     let channel = ChannelBuilder::new(env).secure_connect(&addr, credentials);
-    let files_guard_client = FilesGuardClient::new(channel);
+    let files_guard_client = FilesGuardClient::new(channel.clone());
+    let users_client = UsersClient::new(channel.clone());
+    let mut current_user = User::new();
+    current_user.set_username("Shady".to_owned());
+    let mut users = Users::new(&users_client, current_user);
+    let files = Files::new(&files_guard_client);
+    let paths = files.get_files_paths()?;
+    let verify_files_result = files.make_verify_files(paths)?;
 
-    let files = guard_client::get_files_paths(&files_guard_client)?;
-    let verify_files_result = guard_client::make_verify_files(&files_guard_client, files)?;
     if verify_files_result {
         // Fire MsgBox Here
+        users.add_user()?;
         info!("{}", "All is well".green());
+        let mut count = 0u8;
+        let five_ms = Duration::from_millis(500);
+        loop {
+            if count > 10 {
+                break;
+            }
+            users.ping_server()?;
+            count += 1;
+            thread::sleep(five_ms);
+        }
         Ok(())
     } else {
         error!("{}", "Ok, cheater".red());

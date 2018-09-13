@@ -2,6 +2,7 @@
 
 pub(crate) mod files_guard;
 pub(crate) mod state;
+pub(crate) mod users;
 #[path = "../util.rs"]
 pub(crate) mod util;
 use colored::*;
@@ -35,9 +36,10 @@ fn main() -> Result<()> {
 
     let files_guard = FilesGuardService::new(hashes);
     let files_guard_service = protos::files_grpc::create_files_guard(files_guard);
-
+    let users_service = protos::users_grpc::create_users(users::UsersService);
     let mut server = ServerBuilder::new(env)
         .register_service(files_guard_service)
+        .register_service(users_service)
         .bind_secure(config.server.ip, config.server.port.parse()?, credentials)
         .build()?;
 
