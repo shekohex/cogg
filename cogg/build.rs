@@ -6,6 +6,9 @@ fn main() {
     let proto_files = "src/protos/cogg/users.proto";
     println!("cargo:rerun-if-changed={}", proto_files);
     println!("cargo:rerun-if-changed={}", proto_users);
-    protoc_grpcio::compile_grpc_protos(&["cogg/files.proto", "cogg/users.proto"], &[proto_root], &proto_root)
-        .expect("Failed to compile gRPC definitions!");
+    protoc_grpcio::compile_grpc_protos(
+        &["cogg/files.proto", "cogg/users.proto"],
+        &[proto_root],
+        &proto_root,
+    ).expect("Failed to compile gRPC definitions!");
 }
