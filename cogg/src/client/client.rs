@@ -5,8 +5,8 @@ pub(crate) mod users;
 #[path = "../util.rs"]
 pub(crate) mod util;
 use colored::*;
-use crate::users::Users;
 use crate::files::Files;
+use crate::users::Users;
 use crate::util::Result;
 use failure::err_msg;
 use grpcio::{ChannelBuilder, ChannelCredentialsBuilder, EnvBuilder};
@@ -37,7 +37,12 @@ fn main() -> Result<()> {
     let files_guard_client = FilesGuardClient::new(channel.clone());
     let users_client = UsersClient::new(channel.clone());
     let mut current_user = User::new();
-    current_user.set_username("Shady".to_owned());
+    let username: String = std::env::args()
+        .skip(1)
+        .collect::<Vec<String>>()
+        .first()
+        .unwrap().to_string();
+    current_user.set_username(username);
     let mut users = Users::new(&users_client, current_user);
     let files = Files::new(&files_guard_client);
     let paths = files.get_files_paths()?;
@@ -48,14 +53,14 @@ fn main() -> Result<()> {
         users.add_user()?;
         info!("{}", "All is well".green());
         let mut count = 0u8;
-        let five_ms = Duration::from_millis(500);
+        let sleep_ms = Duration::from_millis(4000);
         loop {
             if count > 10 {
                 break;
             }
             users.ping_server()?;
             count += 1;
-            thread::sleep(five_ms);
+            thread::sleep(sleep_ms);
         }
         Ok(())
     } else {
