@@ -44,7 +44,7 @@ impl<'a> Files<'a> {
         }
     }
 
-    pub fn make_verify_files(&self, paths: Vec<String>) -> Result<bool> {
+    pub fn make_verify_files(&self, paths: &[String]) -> Result<bool> {
         let mut req = FileCollection::new();
         let files: Vec<File> = paths
             .iter()

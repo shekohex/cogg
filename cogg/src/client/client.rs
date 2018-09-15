@@ -46,7 +46,7 @@ fn main() -> Result<()> {
     let mut users = Users::new(&users_client, current_user);
     let files = Files::new(&files_guard_client);
     let paths = files.get_files_paths()?;
-    let verify_files_result = files.make_verify_files(paths)?;
+    let verify_files_result = files.make_verify_files(&paths)?;
 
     if verify_files_result {
         // Fire MsgBox Here

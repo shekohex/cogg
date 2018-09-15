@@ -43,9 +43,9 @@ impl ServerState {
         let ts = now.timestamp_millis();
         if self.users.contains_key(username) {
             self.users.insert(username.to_string(), ts);
-            return ts;
+            ts
         } else {
-            return 0;
+            0
         }
     }
 }
