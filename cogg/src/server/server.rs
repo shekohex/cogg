@@ -5,17 +5,16 @@ pub(crate) mod state;
 pub(crate) mod users;
 #[path = "../util.rs"]
 pub(crate) mod util;
-use colored::*;
+use colored::Colorize;
 use crate::files_guard::FilesGuardService;
+use crate::state::ServiceWorker;
 use crate::util::Result;
-use futures::{sync::oneshot, Future};
+use futures::Future;
 use grpcio::{Environment, ServerBuilder, ServerCredentialsBuilder};
 use log::info;
-use std::io::{Read, Write};
+use std::io::Write;
 use std::path::Path;
 use std::sync::Arc;
-use std::{io, thread};
-
 fn main() -> Result<()> {
     std::env::set_var("GG_LOGS", "ggserver");
     let mut builder = env_logger::Builder::from_env("GG_LOGS");
@@ -47,13 +46,8 @@ fn main() -> Result<()> {
     for &(ref host, port) in server.bind_addrs() {
         info!("listening on {}:{}", host, port);
     }
-    let (tx, rx) = oneshot::channel();
-    thread::spawn(move || {
-        info!("{}", "Press ENTER to exit...".blue());
-        let _ = io::stdin().read(&mut [0u8]).unwrap();
-        tx.send(())
-    });
-    let _ = rx.wait();
+    let mut worker = ServiceWorker::new(5000);
+    worker.work();
     let _ = server.shutdown().wait();
     Ok(())
 }
