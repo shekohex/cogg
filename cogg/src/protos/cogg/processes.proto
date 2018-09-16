@@ -1,0 +1,37 @@
+syntax = "proto3";
+package cogg;
+
+message WinProcess {
+  uint32 module_id = 1;     // th32ModuleID
+  uint32 process_id = 2;    // th32ProcessID
+  string module_name = 5;   // szModule
+  string exe_path = 6;      // szExePath
+}
+
+message WinProcessSnapShot {
+    string username = 1;
+    string pc_owner_name = 2;
+    uint32 snapshot_time = 3;
+    repeated WinProcess last_snapshot = 4;
+}
+
+message SnapshotResponse {
+    bool cheat_found = 1;
+    bool should_kick = 2;
+    bool should_abort = 3;
+    string alert_message = 4;
+    repeated WinProcess cheats = 5;
+}
+
+/**
+ * The WinProcessGuard Service
+ * this service is responsible for checking
+ * the running process on the player pc.
+ *
+ * @stable
+ * @not-implemented
+ * @added-in v1
+ */
+service WinProcessGuard {
+    rpc SendSnapshot(WinProcessSnapShot) returns (SnapshotResponse);
+}
