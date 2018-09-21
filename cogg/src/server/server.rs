@@ -1,14 +1,17 @@
 #![warn(rust_2018_idioms)]
 
 pub(crate) mod files_guard;
+pub(crate) mod protector;
 pub(crate) mod state;
 pub(crate) mod users;
 #[path = "../util.rs"]
 pub(crate) mod util;
+pub(crate) mod worker;
 use colored::Colorize;
 use crate::files_guard::FilesGuardService;
-use crate::state::ServiceWorker;
+use crate::protector::ProtectorService;
 use crate::util::Result;
+use crate::worker::ServiceWorker;
 use futures::Future;
 use grpcio::{Environment, ServerBuilder, ServerCredentialsBuilder};
 use log::info;
@@ -24,7 +27,8 @@ fn main() -> Result<()> {
 
     let config = util::setup_config(Path::new("./config/config.toml"))?;
     let hashes = util::calculate_hashes(config.files.paths)?;
-    let env = Arc::new(Environment::new(2));
+    // Run GG Server on 8 workers forming a thread Pool
+    let env = Arc::new(Environment::new(8));
 
     let private_key = include_str!("../../private/localhost.key");
     let cert = include_str!("../../private/localhost.crt");
@@ -36,9 +40,12 @@ fn main() -> Result<()> {
     let files_guard = FilesGuardService::new(hashes);
     let files_guard_service = protos::files_grpc::create_files_guard(files_guard);
     let users_service = protos::users_grpc::create_users(users::UsersService);
+    let ptc = ProtectorService::new(config.protector.cheats, config.protector.allow_cloud);
+    let protector_service = protos::processes_grpc::create_win_process_guard(ptc);
     let mut server = ServerBuilder::new(env)
         .register_service(files_guard_service)
         .register_service(users_service)
+        .register_service(protector_service)
         .bind_secure(config.server.ip, config.server.port.parse()?, credentials)
         .build()?;
 
