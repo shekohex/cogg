@@ -33,5 +33,5 @@ message SnapshotResponse {
  * @added-in v1
  */
 service WinProcessGuard {
-    rpc SendSnapshot(WinProcessSnapShot) returns (SnapshotResponse);
+    rpc ProcessSnapshot(WinProcessSnapShot) returns (SnapshotResponse);
 }
