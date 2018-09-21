@@ -16,6 +16,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub(crate) struct Config {
     pub(crate) server: ServerConfig,
     pub(crate) files: FilesConfig,
+    pub(crate) protector: ProtectorConfig,
 }
 
 #[derive(Debug, Deserialize)]
@@ -27,6 +28,12 @@ pub(crate) struct ServerConfig {
 #[derive(Debug, Deserialize)]
 pub(crate) struct FilesConfig {
     pub paths: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub(crate) struct ProtectorConfig {
+    pub allow_cloud: bool,
+    pub cheats: Vec<String>,
 }
 
 impl fmt::Display for ServerConfig {
