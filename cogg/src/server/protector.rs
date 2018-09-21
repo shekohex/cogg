@@ -16,6 +16,21 @@ impl ProtectorService {
         ProtectorService { cheats }
     }
 }
+impl ProtectorService {
+    fn check_for_cheats(
+        &self,
+        current_processes: &[processes::WinProcess],
+    ) -> Vec<processes::WinProcess> {
+        current_processes
+            .iter()
+            .map(|p| {
+                debug!("Got Process {:?}", p);
+                p
+            }).filter(|p| self.cheats.contains(&p.get_module_name().to_string()))
+            .cloned()
+            .collect()
+    }
+}
 
 impl WinProcessGuard for ProtectorService {
     fn process_snapshot(
@@ -39,7 +54,7 @@ impl WinProcessGuard for ProtectorService {
                 )).map_err(move |e| error!("failed to reply {:?}: {:?}", req, e));
             ctx.spawn(f)
         } else {
-            let cheats = RepeatedField::from_vec(check_for_cheats(last_snapshot, &self.cheats));
+            let cheats = RepeatedField::from_vec(self.check_for_cheats(last_snapshot));
             res.set_cheats(cheats);
             let f = sink
                 .success(res)
@@ -47,18 +62,4 @@ impl WinProcessGuard for ProtectorService {
             ctx.spawn(f)
         }
     }
-}
-
-fn check_for_cheats(
-    current_processes: &[processes::WinProcess],
-    known_cheats: &[String],
-) -> Vec<processes::WinProcess> {
-    current_processes
-        .iter()
-        .map(|p| {
-            debug!("Got Process {:?}", p);
-            p
-        }).filter(|p| known_cheats.contains(&p.get_module_name().to_string()))
-        .cloned()
-        .collect()
 }
