@@ -1,21 +1,21 @@
+use failure::err_msg;
+use std::sync::MutexGuard;
 use chrono::prelude::*;
-use colored::Colorize;
 use lazy_static::lazy_static;
 use log::{debug, error};
 use protos::users::User;
 use std::collections::HashMap;
 use std::sync::Mutex;
-use std::time::{Duration, Instant};
-use tokio::prelude::*;
-use tokio::timer::Interval;
+use crate::util::Result;
+
 lazy_static! {
-    pub(crate) static ref SERVER_STATE: Mutex<ServerState> = Mutex::new(ServerState::new());
+    static ref SERVER_STATE: Mutex<ServerState> = Mutex::new(ServerState::new());
 }
 
 #[derive(Debug)]
 pub(crate) struct ServerState {
     /// Holds Online Users
-    users: HashMap<String, i64>,
+    pub(crate) users: HashMap<String, i64>,
     last_mutate: i64,
 }
 
@@ -25,6 +25,17 @@ impl ServerState {
         ServerState {
             users: HashMap::new(),
             last_mutate: now.timestamp_millis(),
+        }
+    }
+
+    pub fn get_state<'a>() -> Result<MutexGuard<'a, Self>> {
+        let lock = SERVER_STATE.try_lock();
+        if let Ok(state) = lock {
+            Ok(state)
+        } else {
+            let err = "Error While trying to get server state, it may block!";
+            error!("{}", err);
+            Err(err_msg(err))
         }
     }
 
@@ -47,56 +58,5 @@ impl ServerState {
         } else {
             0
         }
-    }
-}
-
-pub(crate) struct ServiceWorker {
-    check_ervery: u64,
-    is_working: bool,
-}
-
-impl ServiceWorker {
-    pub fn new(check_ervery: u64) -> Self {
-        ServiceWorker {
-            check_ervery,
-            is_working: false,
-        }
-    }
-
-    pub fn work(&mut self) {
-        if self.is_working || self.check_ervery == 0 {
-            return;
-        }
-        let runner = |_instant| {
-            let mut removed: Vec<String> = Vec::new();
-            let lock = SERVER_STATE.try_lock();
-            if let Ok(mut state) = lock {
-                let now = Utc::now();
-                let now_ts = now.timestamp_millis();
-                state.users.retain(|username, &mut ts| {
-                    let last_ping = Duration::from_millis(ts as u64);
-                    let now_ms = Duration::from_millis(now_ts as u64);
-                    let diff = now_ms - last_ping;
-                    if diff.as_secs() > 5 {
-                        removed.push(username.to_string());
-                        return false;
-                    }
-                    true
-                });
-                if !removed.is_empty() {
-                    debug!("Removed {} Users: {:?}", removed.len(), removed);
-                }
-                debug!("We Have {} Users Connected", state.users.len());
-            } else {
-                error!("Error While trying to get server state, it may block!");
-            }
-            Ok(())
-        };
-        let task = Interval::new(Instant::now(), Duration::from_millis(self.check_ervery))
-            .for_each(runner)
-            .map_err(|e| error!("Failed While Running Worker; err={:?}", e));
-        self.is_working = true;
-        debug!("{}", "Worker Started OK!".green());
-        tokio::run(task);
     }
 }

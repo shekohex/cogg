@@ -1,4 +1,4 @@
-use crate::state::SERVER_STATE;
+use crate::state::ServerState;
 use futures::Future;
 use log::{debug, error, info};
 use protos::users::{User, UserPing, UserResponse};
@@ -16,19 +16,15 @@ impl Users for UsersService {
     ) {
         let username = req.get_username();
         debug!("Got Username {}", username);
-        let mut lock = SERVER_STATE.try_lock();
-        if let Ok(ref mut state) = lock {
-            let ts = state.add_user(&req);
-            let mut res = UserResponse::new();
-            res.set_last_ping(ts);
-            res.set_added(true);
-            let f = sink
-                .success(res)
-                .map_err(move |e| error!("failed to reply {:?}: {:?}", req, e));
-            ctx.spawn(f)
-        } else {
-            error!("Failed to lock the State!");
-        }
+        let mut state = ServerState::get_state().unwrap();
+        let ts = state.add_user(&req);
+        let mut res = UserResponse::new();
+        res.set_last_ping(ts);
+        res.set_added(true);
+        let f = sink
+            .success(res)
+            .map_err(move |e| error!("failed to reply {:?}: {:?}", req, e));
+        ctx.spawn(f)
     }
 
     fn ping_user(
@@ -39,18 +35,14 @@ impl Users for UsersService {
     ) {
         let username = req.get_username();
         info!("Got Ping form {}", username);
-        let mut lock = SERVER_STATE.try_lock();
-        if let Ok(ref mut state) = lock {
-            let ts = state.ping_user(username);
-            let mut res = UserResponse::new();
-            res.set_last_ping(ts);
-            res.set_added(false);
-            let f = sink
-                .success(res)
-                .map_err(move |e| error!("failed to reply {:?}: {:?}", req, e));
-            ctx.spawn(f)
-        } else {
-            error!("Failed to lock the State!");
-        }
+        let mut state = ServerState::get_state().unwrap();
+        let ts = state.ping_user(username);
+        let mut res = UserResponse::new();
+        res.set_last_ping(ts);
+        res.set_added(false);
+        let f = sink
+            .success(res)
+            .map_err(move |e| error!("failed to reply {:?}: {:?}", req, e));
+        ctx.spawn(f)
     }
 }
