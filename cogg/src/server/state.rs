@@ -1,12 +1,12 @@
-use failure::err_msg;
-use std::sync::MutexGuard;
 use chrono::prelude::*;
+use crate::util::Result;
+use failure::err_msg;
 use lazy_static::lazy_static;
 use log::{debug, error};
 use protos::users::User;
 use std::collections::HashMap;
 use std::sync::Mutex;
-use crate::util::Result;
+use std::sync::MutexGuard;
 
 lazy_static! {
     static ref SERVER_STATE: Mutex<ServerState> = Mutex::new(ServerState::new());
@@ -47,6 +47,19 @@ impl ServerState {
         debug!("Added User {} to database, at {}", user.get_username(), ts);
         self.last_mutate = ts;
         ts
+    }
+
+    pub fn kick_user(&mut self, username: &str) -> Result<bool> {
+        if let Some(ts) = self.users.remove(username) {
+            debug!(
+                "Removed User {} from database at {} as found some running cheats",
+                username, ts
+            );
+            Ok(true)
+        } else {
+            error!("Error While Trying to remove that user {}, as it is not found", username);
+            Ok(false)
+        }
     }
 
     pub fn ping_user(&mut self, username: &str) -> i64 {

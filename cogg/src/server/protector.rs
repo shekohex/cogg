@@ -1,3 +1,4 @@
+use colored::*;
 use crate::state::ServerState;
 use futures::future::Future;
 use grpcio::{RpcContext, RpcStatus, RpcStatusCode, UnarySink};
@@ -40,7 +41,7 @@ impl WinProcessGuard for ProtectorService {
         sink: UnarySink<processes::SnapshotResponse>,
     ) {
         let (username, last_snapshot) = (req.get_username(), req.get_last_snapshot());
-        let state = ServerState::get_state().unwrap();
+        let mut state = ServerState::get_state().unwrap();
         let mut res = processes::SnapshotResponse::new();
         if !state.users.contains_key(username) {
             warn!(
@@ -54,7 +55,14 @@ impl WinProcessGuard for ProtectorService {
                 )).map_err(move |e| error!("failed to reply {:?}: {:?}", req, e));
             ctx.spawn(f)
         } else {
-            let cheats = RepeatedField::from_vec(self.check_for_cheats(last_snapshot));
+            let cheats = self.check_for_cheats(last_snapshot);
+            let cheat_found = !cheats.is_empty();
+            res.set_cheat_found(cheat_found);
+            if cheat_found {
+                debug!("{} {} {}", "Found a cheat from user".red(), username, "we should kick him out !".red());
+                state.kick_user(username).unwrap();
+            }
+            let cheats = RepeatedField::from_slice(&cheats);
             res.set_cheats(cheats);
             let f = sink
                 .success(res)
