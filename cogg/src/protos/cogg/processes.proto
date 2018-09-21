@@ -11,7 +11,7 @@ message WinProcess {
 message WinProcessSnapShot {
     string username = 1;
     string pc_owner_name = 2;
-    uint32 snapshot_time = 3;
+    int64 snapshot_time = 3;
     repeated WinProcess last_snapshot = 4;
 }
 
