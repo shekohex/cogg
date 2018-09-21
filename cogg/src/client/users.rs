@@ -3,6 +3,7 @@ use failure::err_msg;
 use log::{error, info};
 use protos::users::{User, UserPing};
 use protos::users_grpc::UsersClient;
+use crate::state::ClientState;
 
 pub struct Users<'a> {
     client: &'a UsersClient,
@@ -11,10 +12,13 @@ pub struct Users<'a> {
 }
 
 impl<'a> Users<'a> {
-    pub fn new(client: &'a UsersClient, current_user: User) -> Self {
+    pub fn new(client: &'a UsersClient) -> Self {
+        let state = ClientState::get_state().unwrap();
+        // we have to clone the current user data, so it is not that big tho.
+        let current_user = state.current_user.clone();
         Users {
             client,
-            current_user,
+            current_user: current_user.unwrap(),
             user_added: false,
         }
     }
