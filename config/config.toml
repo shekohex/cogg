@@ -4,3 +4,8 @@ port = "6142"
 
 [files]
 paths = ['./tmp/f1.txt', './tmp/f2.txt']
+
+[protector]
+# Allow Protector to share and update the local hacks database from the GG Cloud
+allow_cloud = false
+cheats = ['notepad']
