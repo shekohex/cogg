@@ -57,7 +57,10 @@ impl ServerState {
             );
             Ok(true)
         } else {
-            error!("Error While Trying to remove that user {}, as it is not found", username);
+            error!(
+                "Error While Trying to remove that user {}, as it is not found",
+                username
+            );
             Ok(false)
         }
     }

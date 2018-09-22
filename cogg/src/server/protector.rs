@@ -59,7 +59,12 @@ impl WinProcessGuard for ProtectorService {
             let cheat_found = !cheats.is_empty();
             res.set_cheat_found(cheat_found);
             if cheat_found {
-                debug!("{} {} {}", "Found a cheat from user".red(), username, "we should kick him out !".red());
+                debug!(
+                    "{} {} {}",
+                    "Found a cheat from user".red(),
+                    username,
+                    "we should kick him out !".red()
+                );
                 state.kick_user(username).unwrap();
             }
             let cheats = RepeatedField::from_slice(&cheats);
