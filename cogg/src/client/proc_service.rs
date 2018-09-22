@@ -1,10 +1,10 @@
 use chrono::prelude::*;
 use crate::state::ClientState;
 use crate::util::Result;
+use log::debug;
 use protobuf::RepeatedField;
 use protos::processes;
 use protos::processes_grpc::WinProcessGuardClient;
-use log::debug;
 
 pub struct ProcService<'a> {
     client: &'a WinProcessGuardClient,
@@ -33,6 +33,7 @@ impl<'a> ProcService<'a> {
     }
 
     fn get_current_running_processes(&self) -> Vec<processes::WinProcess> {
+        //TODO: Get actual running processes
         let (mut proc1, mut proc2) = (processes::WinProcess::new(), processes::WinProcess::new());
         proc1.set_module_name("chrome".to_string());
         proc2.set_module_name("notepad".to_string());

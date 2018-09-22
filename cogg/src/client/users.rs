@@ -1,9 +1,9 @@
+use crate::state::ClientState;
 use crate::util::Result;
 use failure::err_msg;
 use log::{error, info};
 use protos::users::{User, UserPing};
 use protos::users_grpc::UsersClient;
-use crate::state::ClientState;
 
 pub struct Users<'a> {
     client: &'a UsersClient,
@@ -46,7 +46,8 @@ impl<'a> Users<'a> {
             let res = self.client.ping_user(&req)?;
             let last_ping = res.get_last_ping();
             if last_ping == 0 {
-                let error_msg = "Error While Ping User, User dose not exist in the server";
+                let error_msg =
+                    "Error While Ping User, User dose not exist in the server, maybe kicked out?";
                 error!("{}", error_msg);
                 Err(err_msg(error_msg))
             } else {

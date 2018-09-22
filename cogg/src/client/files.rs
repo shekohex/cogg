@@ -83,7 +83,7 @@ impl<'a> Files<'a> {
         Ok(result)
     }
 
-    fn verify_status(&self ,status: FileStatus) -> bool {
+    fn verify_status(&self, status: FileStatus) -> bool {
         match status {
             FileStatus::OK => true,
             _ => false,

@@ -15,9 +15,9 @@ use failure::err_msg;
 use grpcio::{ChannelBuilder, ChannelCredentialsBuilder, EnvBuilder};
 use log::{error, info};
 use protos::files_grpc::FilesGuardClient;
+use protos::processes_grpc::WinProcessGuardClient;
 use protos::users::User;
 use protos::users_grpc::UsersClient;
-use protos::processes_grpc::WinProcessGuardClient;
 use std::io::Write;
 use std::path::Path;
 use std::sync::Arc;
@@ -37,25 +37,29 @@ fn main() -> Result<()> {
         .root_cert(cert.into())
         .build();
 
+    let mut state = state::ClientState::get_state().unwrap();
     let mut current_user = User::new();
     let username = std::env::args().nth(1).unwrap_or_default();
     current_user.set_username(username);
-    state::ClientState::add_current_user(current_user);
+    state.add_current_user(current_user);
 
     let env = Arc::new(EnvBuilder::new().build());
     let channel = ChannelBuilder::new(env).secure_connect(&addr, credentials);
+
     let files_guard_client = FilesGuardClient::new(channel.clone());
     let users_client = UsersClient::new(channel.clone());
     let proc_client = WinProcessGuardClient::new(channel.clone());
-    let mut users = Users::new(&users_client);
+
+    let mut me = Users::new(&users_client);
     let files = Files::new(&files_guard_client);
     let proc_watcher = ProcService::new(&proc_client);
+
     let paths = files.get_files_paths()?;
     let verify_files_result = files.make_verify_files(&paths)?;
 
     if verify_files_result {
         // Fire MsgBox Here
-        users.add_user()?;
+        me.add_user()?;
         proc_watcher.send_snapshot()?;
         info!("{}", "All is well".green());
         let mut count = 0u8;
@@ -64,7 +68,7 @@ fn main() -> Result<()> {
             if count > 10 {
                 break;
             }
-            users.ping_server()?;
+            me.ping_server()?;
             count += 1;
             thread::sleep(sleep_ms);
         }

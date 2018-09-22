@@ -24,8 +24,8 @@ impl ClientState {
         }
     }
 
-    pub fn add_current_user(current_user: User) {
-        Self::get_state().unwrap().current_user = Some(current_user);
+    pub fn add_current_user(&mut self, current_user: User) {
+        self.current_user = Some(current_user);
     }
 
     pub fn get_state<'a>() -> Result<MutexGuard<'a, Self>> {
