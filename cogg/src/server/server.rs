@@ -10,19 +10,20 @@ pub(crate) mod worker;
 use colored::Colorize;
 use crate::files_guard::FilesGuardService;
 use crate::protector::ProtectorService;
+use crate::util::BackgroundWorker;
 use crate::util::Result;
 use crate::worker::ServiceWorker;
 use futures::Future;
 use grpcio::{Environment, ServerBuilder, ServerCredentialsBuilder};
 use log::info;
-use std::io::Write;
 use std::path::Path;
 use std::sync::Arc;
 fn main() -> Result<()> {
     std::env::set_var("GG_LOGS", "ggserver");
-    let mut builder = env_logger::Builder::from_env("GG_LOGS");
-    builder.format(|buf, record| writeln!(buf, " {} -- {}", record.level(), record.args()));
-    builder.init();
+    util::setup_logger(Path::new(&format!(
+        "./debug/GG_Server_{}.log",
+        chrono::Local::now().format("%Y_%m_%d")
+    )))?;
     info!("{}", "Starting Server..".green());
 
     let config = util::setup_config(Path::new("./config/config.toml"))?;

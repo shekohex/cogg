@@ -18,7 +18,6 @@ use protos::files_grpc::FilesGuardClient;
 use protos::processes_grpc::WinProcessGuardClient;
 use protos::users::User;
 use protos::users_grpc::UsersClient;
-use std::io::Write;
 use std::path::Path;
 use std::sync::Arc;
 use std::thread;
@@ -26,9 +25,10 @@ use std::time::Duration;
 
 fn main() -> Result<()> {
     std::env::set_var("GG_LOGS", "ggclient,fshash");
-    let mut builder = env_logger::Builder::from_env("GG_LOGS");
-    builder.format(|buf, record| writeln!(buf, " {} -- {}", record.level(), record.args()));
-    builder.init();
+    util::setup_logger(Path::new(&format!(
+        "./debug/GG_Client_{}.log",
+        chrono::Local::now().format("%Y_%m_%d")
+    )))?;
     info!("{}", "Starting Client..".green());
     let config = util::setup_config(Path::new("./config/config.toml"))?;
     let addr = format!("{}", config.server);
@@ -36,12 +36,15 @@ fn main() -> Result<()> {
     let credentials = ChannelCredentialsBuilder::new()
         .root_cert(cert.into())
         .build();
-
-    let mut state = state::ClientState::get_state().unwrap();
-    let mut current_user = User::new();
-    let username = std::env::args().nth(1).unwrap_or_default();
-    current_user.set_username(username);
-    state.add_current_user(current_user);
+    {
+        // The state lock must be droped here, as we will use it later too
+        let mut state = state::ClientState::get_state().unwrap();
+        let mut current_user = User::new();
+        let username = std::env::args().nth(1).unwrap_or_default();
+        current_user.set_username(username);
+        state.add_current_user(current_user);
+        // State lock will be droped here
+    }
 
     let env = Arc::new(EnvBuilder::new().build());
     let channel = ChannelBuilder::new(env).secure_connect(&addr, credentials);
@@ -51,6 +54,7 @@ fn main() -> Result<()> {
     let proc_client = WinProcessGuardClient::new(channel.clone());
 
     let mut me = Users::new(&users_client);
+    me.add_user()?;
     let files = Files::new(&files_guard_client);
     let proc_watcher = ProcService::new(&proc_client);
 
@@ -59,7 +63,6 @@ fn main() -> Result<()> {
 
     if verify_files_result {
         // Fire MsgBox Here
-        me.add_user()?;
         proc_watcher.send_snapshot()?;
         info!("{}", "All is well".green());
         let mut count = 0u8;
