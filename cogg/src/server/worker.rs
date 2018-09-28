@@ -5,6 +5,7 @@ use log::{debug, error};
 use std::time::{Duration, Instant};
 use tokio::prelude::*;
 use tokio::timer::Interval;
+use crate::util::BackgroundWorker;
 
 pub(crate) struct ServiceWorker {
     check_ervery: u64,
@@ -18,8 +19,11 @@ impl ServiceWorker {
             is_working: false,
         }
     }
+}
+
+impl BackgroundWorker for ServiceWorker {
     /// Start the Service Worker
-    pub fn work(&mut self) {
+    fn work(&mut self) {
         if self.is_working || self.check_ervery == 0 {
             return;
         }
