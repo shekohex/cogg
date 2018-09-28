@@ -40,7 +40,7 @@ mod tests {
     #[test]
     fn it_should_generate_hash() {
         // the file only contains "1234"
-        let file_name = String::from("../tmp/f1.txt");
+        let file_name = String::from("../tests/tmp/f1.txt");
         let hash = crate::get_hash_from(&file_name).unwrap();
         assert_eq!(hash, "81dc9bdb52d04dc20036dbd8313ed055");
     }
