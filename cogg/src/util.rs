@@ -19,6 +19,11 @@ pub(crate) struct Config {
     pub(crate) protector: ProtectorConfig,
 }
 
+pub(crate) trait BackgroundWorker {
+    /// Start the Service Worker
+    fn work(&mut self);
+}
+
 #[derive(Debug, Deserialize)]
 pub(crate) struct ServerConfig {
     pub ip: String,
@@ -51,6 +56,29 @@ pub(crate) fn setup_config(path: &Path) -> Result<Config> {
     let config: Config = toml::from_str(&contents)?;
     info!("{}", "Config OK!".blue());
     Ok(config)
+}
+
+pub(crate) fn setup_logger(log_file_path: &Path) -> Result<()> {
+    // Configure logger at runtime
+    fern::Dispatch::new()
+        // Perform allocation-free log formatting
+        .format(|out, message, record| {
+            out.finish(format_args!(
+                "{}[{}][{}] {}",
+                chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
+                record.target(),
+                record.level(),
+                message
+            ))
+        })
+        // Add blanket level filter -
+        .level(log::LevelFilter::Debug)
+        // Output to stdout, files, and other Dispatch configurations
+        .chain(std::io::stdout())
+        .chain(fern::log_file(log_file_path)?)
+        // Apply globally
+        .apply()?;
+    Ok(())
 }
 
 #[allow(dead_code)]
