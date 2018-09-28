@@ -3,7 +3,7 @@ ip = "localhost"
 port = "6142"
 
 [files]
-paths = ['./tmp/f1.txt', './tmp/f2.txt']
+paths = ['./tests/tmp/f1.txt', './tests/tmp/f2.txt']
 
 [protector]
 # Allow Protector to share and update the local hacks database from the GG Cloud
