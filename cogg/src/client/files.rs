@@ -1,3 +1,4 @@
+use crate::state::ClientState;
 use crate::util::Result;
 use failure::err_msg;
 use futures::future::Future;
@@ -46,6 +47,13 @@ impl<'a> Files<'a> {
 
     pub fn make_verify_files(&self, paths: &[String]) -> Result<bool> {
         let mut req = FileCollection::new();
+        let state = ClientState::get_state().unwrap();
+        let current_user = state.current_user.clone().unwrap();
+        let username = current_user.get_username();
+        let mut builder = grpcio::MetadataBuilder::with_capacity(1);
+        builder.add_str("username", username)?;
+        let metadata = builder.build();
+        let call_opts = grpcio::CallOption::default().headers(metadata);
         let files: Vec<File> = paths
             .iter()
             .map(move |path| {
@@ -58,7 +66,7 @@ impl<'a> Files<'a> {
 
         let files = RepeatedField::from_vec(files);
         req.set_files(files);
-        let mut reply = self.client.verify_files(&req)?;
+        let mut reply = self.client.verify_files_opt(&req, call_opts)?;
 
         let result = loop {
             let f = reply.into_future();
