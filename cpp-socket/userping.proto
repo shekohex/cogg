@@ -1,0 +1,9 @@
+syntax = "proto3";
+package cogg;
+
+message UserPing {
+  uint32 packetId = 1;
+  string username = 2;
+  string client_hash = 3;
+  int64 timestamp = 4;
+}

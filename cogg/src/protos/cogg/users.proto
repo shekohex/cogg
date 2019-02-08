@@ -2,29 +2,30 @@ syntax = "proto3";
 package cogg;
 
 enum UserState {
-    PINGING = 0;
-    NOT_PINGING = 1;
+  PINGING = 0;
+  NOT_PINGING = 1;
 }
 
 message User {
-    string username = 1;
-    string ip = 2;
-    string mac = 3;
-    int64 last_ping = 4;
-    UserState state = 5;
+  string username = 1;
+  string ip = 2;
+  string mac = 3;
+  int64 last_ping = 4;
+  UserState state = 5;
 }
 
 message UserResponse {
-    int64 last_ping = 1;
-    bool added = 2;
-    string client_hash = 3;
+  int64 last_ping = 1;
+  bool added = 2;
+  string client_hash = 3;
 }
 
 message UserPing {
-    string username = 1;
-    string client_hash = 2;
+  uint32 packetId = 1;
+  string username = 2;
+  string client_hash = 3;
+  int64 timestamp = 4;
 }
-
 /**
  * The Users Service
  * this service is responsible for adding/removing
@@ -34,6 +35,6 @@ message UserPing {
  * @added-in v1
  */
 service Users {
-    rpc AddUser (User) returns (UserResponse);
-    rpc PingUser (UserPing) returns (UserResponse);
+  rpc AddUser(User) returns (UserResponse);
+  rpc PingUser(UserPing) returns (UserResponse);
 }

@@ -1,11 +1,12 @@
-#include <arpa/inet.h>  //inet_addr
+#include "gen/userping.pb.h"
+#include <arpa/inet.h> //inet_addr
+#include <iomanip>
 #include <iostream>     //cout
 #include <netdb.h>      //hostent
 #include <stdio.h>      //printf
 #include <string.h>     //strlen
 #include <string>       //string
 #include <sys/socket.h> //socket
-
 using namespace std;
 
 /**
@@ -21,7 +22,7 @@ private:
 public:
   tcp_client();
   bool conn(string, int);
-  bool send_data(string data);
+  bool send_data(char *data, uint size);
   string receive(int);
 };
 
@@ -96,9 +97,9 @@ bool tcp_client::conn(string address, int port) {
 /**
  * Send data to the connected host
  */
-bool tcp_client::send_data(string data) {
+bool tcp_client::send_data(char *data, uint size) {
   // Send some data
-  if (send(sock, data.c_str(), strlen(data.c_str()), 0) < 0) {
+  if (send(sock, data, size, 0) < 0) {
     perror("Send failed : ");
     return false;
   }
@@ -122,30 +123,80 @@ string tcp_client::receive(int size = 512) {
   reply = buffer;
   return reply;
 }
+void hexDump(const char *desc, const char *addr, int len) {
+  int i;
+  unsigned char buff[17];
+  unsigned char *pc = (unsigned char *)addr;
+
+  // Output description if given.
+  if (desc != NULL)
+    printf("+--- Header Packet [%s] Length [%d] ----+\n", desc, len);
+
+  if (len == 0) {
+    printf("  ZERO LENGTH\n");
+    return;
+  }
+  if (len < 0) {
+    printf("  NEGATIVE LENGTH: %i\n", len);
+    return;
+  }
+
+  // Process every byte in the data.
+  for (i = 0; i < len; i++) {
+    // Multiple of 16 means new line (with line offset).
+
+    if ((i % 16) == 0) {
+      // Just don't print ASCII for the zeroth line.
+      if (i != 0)
+        printf("  %s\n", buff);
+
+      // Output the offset.
+      printf("| %04x ", i);
+    }
+
+    // Now the hex code for the specific character.
+    printf(" %02x", pc[i]);
+
+    // And store a printable ASCII character for later.
+    if ((pc[i] < 0x20) || (pc[i] > 0x7e))
+      buff[i % 16] = '.';
+    else
+      buff[i % 16] = pc[i];
+    buff[(i % 16) + 1] = '\0';
+  }
+
+  // Pad out last line if not exactly 16 characters.
+  while ((i % 16) != 0) {
+    printf("   ");
+    i++;
+  }
+
+  // And print the final ASCII bit.
+  printf("  %s\n", buff);
+  printf("+--- Footer Packet [%s] Length [%d] ----+\n", desc, len);
+}
 
 int main(int argc, char *argv[]) {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
   tcp_client c;
   // connect to host
-  c.conn("127.0.0.1", 12345);
-  char username[] = "playerusername";
-  char msg[64];
-  cout << "Sizeof username: " << sizeof(username) << endl;
-  cout << "Sizeof mgs: " << sizeof(msg) << endl;
-
-  memcpy(&msg, &username, strlen(username) + 1);
-  for (int i = sizeof(username) - 1; i < sizeof(msg); i++) {
-    msg[i] = '.';
-  }
-  cout << msg << endl;
-  cout << "len: " << strlen(msg) << endl;
+  c.conn("127.0.0.1", 8090);
+  auto packet = cogg::UserPing::default_instance();
+  packet.set_packetid(1);
+  packet.set_username("Shady");
+  size_t packet_size = packet.ByteSize();
+  auto msg_size = packet_size + sizeof(uint8_t) + sizeof(char);
+  char msg[msg_size];
+  msg[0] = (uint8_t)1; // packet id
+  void *buffer = malloc(packet_size);
+  packet.SerializeToArray(buffer, packet_size);
+  memcpy(msg + sizeof(uint8_t), buffer, packet_size);
+  msg[msg_size - sizeof(char)] = '\0';
   // send some data
-  c.send_data(msg);
-
-  // receive and echo reply
-  cout << "----------------------------\n\n";
-  cout << c.receive(strlen(msg));
-  cout << "\n\n----------------------------\n\n";
-
+  hexDump("UserPing", msg, msg_size);
+  c.send_data(msg, msg_size);
+  cout << "Message Sent!" << endl;
+  google::protobuf::ShutdownProtobufLibrary();
   // done
   return 0;
 }

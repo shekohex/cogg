@@ -4,6 +4,7 @@ pub(crate) mod files;
 pub(crate) mod proc_service;
 pub(crate) mod state;
 pub(crate) mod users;
+pub(crate) mod socket;
 #[path = "../util.rs"]
 pub(crate) mod util;
 use colored::*;
@@ -20,8 +21,6 @@ use protos::users::User;
 use protos::users_grpc::UsersClient;
 use std::path::Path;
 use std::sync::Arc;
-use std::thread;
-use std::time::Duration;
 
 fn main() -> Result<()> {
     std::env::set_var("GG_LOGS", "ggclient,fshash");
@@ -65,16 +64,8 @@ fn main() -> Result<()> {
         // Fire MsgBox Here
         proc_watcher.send_snapshot()?;
         info!("{}", "All is well".green());
-        let mut count = 0u8;
-        let sleep_ms = Duration::from_millis(4000);
-        loop {
-            if count > 10 {
-                break;
-            }
-            me.ping_server()?;
-            count += 1;
-            thread::sleep(sleep_ms);
-        }
+        info!("{}", "Starting Server...".green());
+        socket::run("127.0.0.1:8090")?;
         Ok(())
     } else {
         error!("{}", "Ok, cheater".red());
